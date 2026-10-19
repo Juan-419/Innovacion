@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block head %}
+    <title>Detalle del Animal: {{ ganado.identificacion }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/styles.css"> 
+{% endblock %}
+
+{% block content %}
+<style>
+    /* Estilos globales para la tarjeta fondo oscuro */
+    .card h1, .card p {
+        color: white !important; /* Asegura que los títulos y párrafos sean blancos */
+    }
+    
+    .detalle-item {
+        /* Usamos la misma estructura pero forzamos el color */
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #383c45;
+        color: white; /* Esto debería aplicar el color al texto principal del ítem */
+    }
+    .detalle-item span:first-child {
+        font-weight: bold;
+        color: #b0b0b0; /* Mantiene la etiqueta en un gris claro */
+    }
+    /* Asegurar que el segundo span (el valor) sea blanco o muy claro */
+    .detalle-item span:last-child { 
+        color: white !important; 
+    }
+    /* ... (resto de estilos) ... */
+</style>
+
+
+<div class="main-container">
+    <div class="card detalle-card">
+        
+        <h1 class="card-title">🐂 Detalle del Animal: {{ ganado.identificacion }}</h1>
+
+        <div class="detalle-group">
+            <p><i class="fa-solid fa-tag"></i> <strong>Nombre:</strong> {{ ganado.nombre or 'N/A' }}</p>
+            <p><i class="fa-solid fa-id-badge"></i> <strong>ID Interno:</strong> {{ ganado.id }}</p>
+            <p><i class="fa-solid fa-barcode"></i> <strong>Identificación/Arete:</strong> {{ ganado.identificacion }}</p>
+            <p><i class="fa-solid fa-calendar-days"></i> <strong>Fecha de Nacimiento:</strong> {{ ganado.fecha_nacimiento }}</p>
+            <p><i class="fa-solid fa-venus-mars"></i> <strong>Sexo:</strong> {{ ganado.sexo }}</p>
+        </div>
+
+        <hr>
+
+        <div class="detalle-group">
+            <h3>Asignación</h3>
+            {% if ganado.finca %}
+                <p><i class="fa-solid fa-location-dot"></i> <strong>Finca Asignada:</strong> <a href="/fincas/{{ ganado.finca.id }}" style="color: #00cba9; text-decoration: none;">{{ ganado.finca.nombre }}</a></p>
+            {% else %}
+                 <p><i class="fa-solid fa-location-dot"></i> <strong>Finca Asignada:</strong> <span style="color: #dc3545;">No asignada</span></p>
+            {% endif %}
+
+            {% if ganado.tipo_animal %}
+                <p><i class="fa-solid fa-cow"></i> <strong>Tipo de Animal:</strong> {{ ganado.tipo_animal.nombre }}</p>
+            {% else %}
+                <p><i class="fa-solid fa-cow"></i> <strong>Tipo de Animal:</strong> <span style="color: #dc3545;">No definido</span></p>
+            {% endif %}
+        </div>
+
+        <hr>
+
+        <div class="detalle-acciones">
+            <button onclick="window.location.href='/ganado/editar/{{ ganado.id }}'" style="background-color: #007bff;">
+                <i class="fa-solid fa-pen"></i> Editar
+            </button>
+            
+            <button class="btn-eliminar" data-id="{{ ganado.id }}" style="background-color: #dc3545;">
+                <i class="fa-solid fa-trash-can"></i> Eliminar
+            </button>
+
+            <button onclick="window.location.href='/ganado/lista'" style="background-color: #6c757d;">
+                <i class="fa-solid fa-arrow-left"></i> Volver a Lista
+            </button>
+        </div>
+        
+        <p id="mensaje-feedback" style="text-align: center; margin-top: 15px;"></p>
+    </div>
+</div>
+
+<script>
+    const feedbackEl = document.getElementById("mensaje-feedback");
+    const eliminarBtn = document.querySelector('.btn-eliminar');
+
+    eliminarBtn.addEventListener('click', async (e) => {
+        const ganadoId = e.target.getAttribute('data-id');
+        const identificacion = document.querySelector('.card-title').textContent.replace('🐂 Detalle del Animal: ', '').trim();
+
+        if (confirm(`¿Estás seguro de que quieres eliminar al animal ${identificacion}? Esta acción es irreversible.`)) {
+            
+            const response = await fetch(`/ganado/${ganadoId}`, { method: 'DELETE' });
+            
+            if (response.ok) {
+                feedbackEl.textContent = `✅ Animal ${identificacion} eliminado correctamente. Redirigiendo...`;
+                feedbackEl.style.color = "#00cba9";
+                
+                // Redirige al usuario a la lista después de 2 segundos
+                setTimeout(() => {
+                    window.location.href = '/ganado/lista';
+                }, 2000); 
+
+            } else {
+                const error = await response.json();
+                feedbackEl.textContent = `❌ Error al eliminar: ${error.detail || response.statusText}`;
+                feedbackEl.style.color = "#dc3545";
+            }
+        }
+    });
+</script>
+
+{% if ganado.foto %}
+    <div class="detalle-foto">
+        <img src="/{{ ganado.foto }}" alt="Foto de {{ ganado.identificacion }}">
+    </div>
+{% else %}
+    <p style="text-align:center; color:#dc3545;">No hay foto disponible</p>
+{% endif %}
+
+<style>
+.detalle-foto {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.detalle-foto img {
+    max-width: 600px;   /* Ajusta el ancho máximo */
+    width: 100%;        /* Hace que se adapte al contenedor si es más pequeño */
+    height: auto;       /* Mantiene la proporción */
+    border-radius: 10px; /* Bordes redondeados */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3); /* Sombra para destacar */
+}
+</style>
+
+
+{% endblock %}

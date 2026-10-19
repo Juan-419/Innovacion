@@ -1,0 +1,415 @@
+/* ------------------ FUENTES ------------------ */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Roboto', sans-serif;
+}
+
+/* ------------------ ESTRUCTURA GENERAL ------------------ */
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    display: flex;
+    flex-direction: column; /* Apila contenido y footer */
+    min-height: 100vh;
+    background-color: #dcdcdc;
+}
+
+/* Contenedor principal de la página */
+.container {
+    flex: 1; /* Crece y empuja el footer hacia abajo */
+    padding: 30px;
+}
+
+/* Contenedor para centrar tarjetas (formularios) */
+.main-container {
+    flex: 1; 
+    display: flex;
+    justify-content: center;
+    align-items: center; 
+    padding: 20px;
+}
+
+/* ------------------ NAVBAR ------------------ */
+.navbar {
+    background-color: #26282f;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.navbar .logo {
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 20px;
+}
+
+/* Barra de búsqueda */
+.navbar .search-bar {
+    display: flex;
+    gap: 10px;
+}
+
+.navbar .search-bar input {
+    padding: 8px;
+    border-radius: 5px;
+    border: none;
+    outline: none;
+    background-color: #383c45; 
+    color: #ffffff;
+}
+
+.navbar .search-bar button {
+    padding: 8px 15px;
+    background-color: #179e3b; 
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.navbar .search-bar button:hover {
+    background-color: #0e9e45;
+}
+
+/* Enlaces principales */
+.nav-links {
+    list-style: none;
+    display: flex;
+    gap: 20px;
+}
+
+.nav-links > li > a {
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 16px;
+    transition: color 0.3s;
+    padding: 0 10px;
+    display: block;
+}
+
+.nav-links > li > a:hover {
+    color: #17a749; 
+}
+
+/* ------------------ MENÚ DESPLEGABLE ------------------ */
+.dropdown {
+    position: relative;
+    padding: 0;
+}
+
+.dropbtn {
+    display: block; 
+    text-decoration: none;
+    color: #ffffff;
+    transition: color 0.3s;
+}
+
+.dropdown-content {
+    display: none; 
+    position: absolute;
+    background-color: #383c45;
+    min-width: 180px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5);
+    z-index: 100;
+    top: 100%; 
+    left: 0;
+    border-radius: 0 0 5px 5px;
+    margin-top: 1px;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.dropdown-content a {
+    color: #ffffff;
+    padding: 10px 15px;
+    display: block;
+    text-align: left;
+    white-space: nowrap;
+    font-size: 15px;
+}
+
+.dropdown-content a:hover {
+    background-color: #1aa23f;
+    color: #26282f;
+}
+
+.dropdown:hover > .dropbtn {
+    color: #1aa23f;
+}
+
+.dropbtn i {
+    margin-left: 5px;
+    transition: transform 0.3s ease;
+    font-size: 12px;
+}
+
+.dropdown:hover .dropbtn i {
+    transform: rotate(180deg);
+}
+
+/* ------------------ TABLAS ------------------ */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+table th, table td {
+    padding: 15px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+table th {
+    background: #f2f2f2;
+    color: #333;
+    font-weight: bold;
+}
+
+/* ------------------ BOTONES ------------------ */
+button, input[type="submit"] {
+    background: #1aa23f; 
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+button:hover, input[type="submit"]:hover {
+    background: #1aa23f;
+}
+
+/* ------------------ TARJETAS DE FORMULARIO ------------------ */
+.card {
+    background-color: #26282f;
+    width: 100%;
+    max-width: 400px;
+    padding: 40px 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    text-align: center;
+}
+
+.card h1 {
+    color: #ffffff;
+    margin-bottom: 30px;
+    font-size: 26px;
+    position: relative;
+    display: inline-block;
+}
+
+.card h1::after {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    background-color: #cb9c00;
+    margin: 8px auto 0 auto;
+    border-radius: 2px;
+}
+
+/* Formularios */
+.card label,
+.card .field-title {
+    color: #ffffff; 
+    font-size: 14px;
+    font-weight: 500;
+    text-align: left; 
+    display: block;
+    margin-bottom: 5px; 
+    margin-top: 10px; 
+    padding: 0 5px; 
+}
+
+.card form {
+    text-align: left;
+}
+
+.input-group {
+    background-color: #383c45;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    padding: 5px;
+}
+
+.icon-container {
+    width: 45px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.icon-container i {
+    color: #cb8700;
+    font-size: 18px;
+}
+
+.input-group input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #ffffff;
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+}
+
+.input-group input::placeholder {
+    color: #b0b0b0;
+}
+
+.input-group input[type=number]::-webkit-inner-spin-button, 
+.input-group input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
+
+.input-group select {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #ffffff;
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    -webkit-appearance: none; 
+    -moz-appearance: none;    
+    appearance: none;         
+    background-color: #383c45; 
+    border-radius: 5px;
+    margin: -5px;
+    padding: 15px;
+    line-height: 1; 
+}
+
+.input-group select option {
+    background-color: #383c45;
+    color: #ffffff;
+    padding: 10px;
+}
+
+.input-group.select-wrapper {
+    position: relative;
+    padding: 0;
+    margin-bottom: 20px;
+}
+
+.input-group.select-wrapper::after {
+    content: '\f078';
+    font-family: 'Font Awesome 5 Free'; 
+    font-weight: 900;
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    transform: translateY(-50%);
+    color: #179538; 
+    pointer-events: none; 
+    font-size: 12px;
+}
+
+.btn-submit {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background-color: #179538;
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 10px;
+}
+
+.btn-submit:hover {
+    background-color: #179538;
+}
+
+#mensaje {
+    font-size: 14px;
+    font-weight: 500;
+    color: #ffffff;
+}
+
+.form-message {
+    color: #ffffff;
+    font-size: 14px;
+    margin-bottom: 25px; 
+    text-align: center; 
+    padding: 0 10px;
+}
+
+/* ------------------ FOOTER ------------------ */
+.main-footer {
+    background: #ffffff;
+    color: #ffffff;
+    flex-shrink: 0; /* No se encoje */
+    width: 100%;
+}
+
+.footer-content {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.footer-section {
+    min-width: 250px;
+    margin: 10px 0;
+}
+
+.footer-section h3 { 
+    color: #0cb843; 
+    margin-bottom: 10px; 
+}
+
+.footer-section ul { 
+    list-style: none; 
+    padding: 0; 
+}
+
+.footer-section a { 
+    color: #ccc; 
+    text-decoration: none; 
+    display: block; 
+    padding: 5px 0; 
+    transition: color 0.3s; 
+}
+
+.footer-section a:hover { 
+    color: #fff; 
+}
+
+.footer-bottom {
+    background: #169141;
+    color: #26282f;
+    padding: 10px 0;
+    text-align: center;
+    font-weight: bold;
+    font-size: 0.9em;
+}

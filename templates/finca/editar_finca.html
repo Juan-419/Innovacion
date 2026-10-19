@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block head %}
+    <title>Editar Finca: {{ finca.nombre }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/styles.css"> 
+{% endblock %}
+
+{% block content %}
+
+<div class="main-container">
+    <div class="card">
+        <h1>✏️ Editar Finca: {{ finca.nombre }}</h1>
+
+        <form id="editarFincaForm">
+            <input type="hidden" id="finca_id" value="{{ finca.id }}"> 
+
+            <div class="input-group">
+                <div class="icon-container"><i class="fa-solid fa-tag"></i></div>
+                <input type="text" id="nombre" placeholder="Nombre de la Finca" value="{{ finca.nombre }}" required>
+            </div>
+
+            <div class="input-group">
+                <div class="icon-container"><i class="fa-solid fa-ruler-combined"></i></div>
+                <input type="text" id="tamaño" placeholder="Tamaño (ej. 150.5 hectáreas)" value="{{ finca.tamaño }}" required>
+            </div>
+
+            <div class="input-group">
+                <div class="icon-container"><i class="fa-solid fa-location-dot"></i></div>
+                <input type="text" id="ubicacion" placeholder="Ubicación / Municipio" value="{{ finca.ubicacion }}" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Guardar Cambios</button>
+            
+            <p id="feedback-message" style="margin-top: 15px;"></p>
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        document.getElementById('editarFincaForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            // Usamos el ID del input oculto, aunque en este caso también se puede obtener desde el Jinja.
+            const fincaId = document.getElementById('finca_id').value; 
+            const feedbackMessage = document.getElementById("feedback-message");
+
+            const data = {
+                nombre: document.getElementById("nombre").value,
+                // Si tamaño en la BD es INT, usa parseInt(). Si es FLOAT/Decimal, usa parseFloat().
+                // Tu esquema 'tamaño: int' indica que debe ser INT.
+                tamaño: parseInt(document.getElementById("tamaño").value), 
+                ubicacion: document.getElementById("ubicacion").value
+            };
+
+            try {
+                const response = await fetch(`/fincas/${fincaId}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Usar el mismo diseño de mensaje de éxito que en el Ganado
+                    feedbackMessage.textContent = '✅ Finca actualizada correctamente.';
+                    feedbackMessage.style.color = '#28a745'; // Color verde de éxito
+                } else {
+                    // Usar el mismo diseño de mensaje de error
+                    feedbackMessage.textContent = `❌ Error: ${result.detail || response.statusText}`;
+                    feedbackMessage.style.color = '#dc3545'; // Color rojo de error
+                }
+            } catch (error) {
+                console.error('Error de red:', error);
+                feedbackMessage.textContent = '❌ Error de conexión con el servidor.';
+                feedbackMessage.style.color = '#dc3545';
+            }
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block head %}
+    <title>Registrar Ganado</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/styles_formularios.css"> 
+{% endblock %}
+
+{% block content %}
+<div class="main-container">
+    <div class="card">
+        <h1><i class="fa-solid fa-cow"></i> Registrar Nuevo Animal</h1>
+        <p class="form-message">Ingrese la información detallada del animal, ten presente que tienes que tener ya registro de la finca y del tipo de animal.</p>
+
+        <!-- IMPORTANTE: enctype multipart/form-data -->
+        <form id="registroGanadoForm" enctype="multipart/form-data">
+            
+            <label for="identificacion">Identificación / Arete:</label>
+            <div class="input-group">
+                <div class="icon-container"><i class="fa-solid fa-tag"></i></div>
+                <input type="text" id="identificacion" placeholder="Identificación / Arete" required>
+            </div>
+
+            <label for="nombre">Nombre:</label>
+            <div class="input-group">
+                <div class="icon-container"><i class="fa-solid fa-pen-to-square"></i></div>
+                <input type="text" id="nombre" placeholder="Nombre (opcional)">
+            </div>
+            
+            <label for="fechaNacimiento">Fecha de Nacimiento:</label>
+            <div class="input-group">
+                <input type="date" id="fechaNacimiento" required> 
+            </div>
+
+            <label for="edad">Edad (en meses):</label>
+            <div class="input-group">
+                <div class="icon-container"><i class="fa-solid fa-clock"></i></div>
+                <input type="number" id="edad" placeholder="Edad en meses" required min="0">
+            </div>
+
+            <label for="sexo">Sexo:</label>
+            <div class="input-group select-wrapper"> 
+                <select id="sexo" required>
+                    <option value="" disabled selected>Selecciona el Sexo</option>
+                    <option value="Macho">Macho</option>
+                    <option value="Hembra">Hembra</option>
+                </select>
+            </div>
+            
+            <label for="finca">Finca Asignada:</label>
+            <div class="input-group select-wrapper"> 
+                <select id="finca" required>
+                    <option value="" disabled selected>Selecciona la Finca</option>
+                    {% for finca in fincas %}
+                        <option value="{{ finca.id }}">{{ finca.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <label for="tipoAnimal">Tipo de Animal:</label>
+            <div class="input-group select-wrapper"> 
+                <select id="tipoAnimal" required>
+                    <option value="" disabled selected>Selecciona el Tipo</option>
+                    {% for tipo in tipos_animales %}
+                        <option value="{{ tipo.id }}">{{ tipo.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label for="foto">Foto del Ganado:</label>
+                <input type="file" id="foto" name="foto" accept="image/*">
+            </div>
+
+            <button type="submit" class="btn-submit">Registrar Ganado</button>
+        </form>
+        <p id="mensaje" style="margin-top: 15px; text-align: center;"></p>
+    </div>
+</div>
+
+<script>
+const form = document.getElementById("registroGanadoForm");
+const mensajeEl = document.getElementById("mensaje");
+
+form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData();
+    formData.append("identificacion", document.getElementById("identificacion").value.trim());
+    formData.append("nombre", document.getElementById("nombre").value.trim() || '');
+    formData.append("fecha_nacimiento", document.getElementById("fechaNacimiento").value);
+    formData.append("sexo", document.getElementById("sexo").value);
+    formData.append("edad", document.getElementById("edad").value);
+    formData.append("finca_id", document.getElementById("finca").value);
+    formData.append("tipo_animal_id", document.getElementById("tipoAnimal").value);
+
+    const fotoInput = document.getElementById("foto");
+    if (fotoInput.files.length > 0) {
+        formData.append("foto", fotoInput.files[0]);
+    }
+
+    const response = await fetch("/ganado/api/", {
+        method: "POST",
+        body: formData
+    });
+
+    if (response.ok) {
+        const result = await response.json();
+        mensajeEl.textContent = `✅ Animal "${result.identificacion}" registrado con éxito.`;
+        mensajeEl.style.color = "#00cba9";
+        form.reset(); 
+    } else {
+        const responseData = await response.json();
+        let errorMessage = responseData.detail || "Error desconocido al registrar el ganado.";
+        mensajeEl.textContent = `❌ ${errorMessage}`;
+        mensajeEl.style.color = "#dc3545";
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block head %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/styles_formularios.css"> 
+    <title>Registrar Finca</title>
+{% endblock %}
+
+{% block content %}
+    <div class="main-container">
+        <div class="card">
+            <h1>Registrar Nueva Finca</h1>
+            <form id="fincaForm">
+                <div class="input-group">
+                    <div class="icon-container"><i class="fa-solid fa-tag"></i></div>
+                    <input type="text" id="nombre" placeholder="Nombre de la Finca" required>
+                </div>
+                <div class="input-group">
+                    <div class="icon-container"><i class="fa-solid fa-ruler-combined"></i></div>
+                    <input type="number" id="tamaño" min="1" placeholder="Tamaño (hectáreas)" required>
+                </div>
+                <div class="input-group">
+                    <div class="icon-container"><i class="fa-solid fa-location-dot"></i></div>
+                    <input type="text" id="ubicacion" placeholder="Ubicación" required>
+                </div>
+
+                <button type="submit" class="btn-submit">Registrar</button>
+            </form>
+
+            <p id="mensaje"></p>
+        </div>
+    </div>
+    
+    <script>
+        // ... (Tu script JS de creación aquí) ...
+        const form = document.getElementById("fincaForm");
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const data = {
+                nombre: document.getElementById("nombre").value,
+                tamaño: parseInt(document.getElementById("tamaño").value),
+                ubicacion: document.getElementById("ubicacion").value
+            };
+
+            const response = await fetch("/fincas/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            const mensajeEl = document.getElementById("mensaje");
+            mensajeEl.textContent = result.mensaje || "Finca registrada";
+            
+            mensajeEl.style.color = "#00cba9";
+            mensajeEl.style.marginTop = "15px";
+        });
+    </script>
+
+{% endblock %}
