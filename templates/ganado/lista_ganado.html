@@ -23,8 +23,12 @@
                 <option value="{{ f.id }}" {% if finca_sel == f.id %}selected{% endif %}>{{ f.nombre }}</option>
             {% endfor %}
         </select>
+        <select name="estado" aria-label="Filtrar por estado">
+            {% for e in estados %}<option value="{{ e }}" {% if estado_sel == e %}selected{% endif %}>{{ e }}s</option>{% endfor %}
+            <option value="Todos" {% if estado_sel == 'Todos' %}selected{% endif %}>Todos</option>
+        </select>
         <button type="submit">Buscar</button>
-        {% if q or finca_sel %}<a href="/ganado/lista"><button type="button" style="background-color:#6c757d;">Limpiar</button></a>{% endif %}
+        {% if q or finca_sel or estado_sel != "Activo" %}<a href="/ganado/lista"><button type="button" style="background-color:#6c757d;">Limpiar</button></a>{% endif %}
     </form>
     <p style="margin: 8px 0;"><strong>{{ ganados|length }}</strong> animal(es){% if q or finca_sel %} encontrados{% endif %}.</p>
 
@@ -38,6 +42,7 @@
                 <th>Tipo Animal</th>
                 <th>Finca</th>
                 <th>Sexo</th>
+                <th>Estado</th>
                 <th>Foto</th>
                 <th>Acciones</th>
             </tr>
@@ -52,6 +57,7 @@
                         <td>{{ animal.tipo_animal.nombre }}</td>
                         <td>{{ animal.finca.nombre }}</td>
                         <td>{{ animal.sexo }}</td>
+                        <td>{{ animal.estado }}</td>
                         <td>
                             {% if animal.foto %}
                                 <img src="/{{ animal.foto }}" alt="Foto" style="width: 80px; height: 80px; object-fit: cover; border-radius: 5px;">
@@ -67,7 +73,7 @@
                 {% endfor %}
             {% else %}
                 <tr>
-                    <td colspan="8" style="text-align: center;">{% if q or finca_sel %}No se encontraron animales con ese criterio.{% else %}Aún no hay ganado registrado.{% endif %}</td>
+                    <td colspan="9" style="text-align: center;">{% if q or finca_sel or estado_sel != 'Activo' %}No se encontraron animales con ese criterio.{% else %}Aún no hay ganado registrado.{% endif %}</td>
                 </tr>
             {% endif %}
         </tbody>

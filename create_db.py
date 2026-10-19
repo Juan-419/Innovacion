@@ -1,6 +1,6 @@
-from database import Base, engine
+from database import init_db
 
-# Esto crea todas las tablas según tus modelos actuales
-Base.metadata.create_all(bind=engine)
+# Crea las tablas y agrega las columnas nuevas si la base ya existía
+init_db()
 
 print("Base de datos creada correctamente")

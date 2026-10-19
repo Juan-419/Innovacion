@@ -1,9 +1,103 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Bienvenido al Sistema de Gestión de Ganado</h1>
-<p>Selecciona una opción en el menú superior para comenzar.</p>
-<p> ¡Bienvenido al Sistema de Gestión Ganadera! 🐂🌿
-    Aquí podrás controlar tus fincas, registrar tu ganado y administrar todos los datos de manera fácil y segura.  
-     ¡Vamos a empezar a gestionar tu actividad ganadera de la mejor manera! </p>
+<style>
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 14px 0; }
+    .kpi { background: #26282f; color: #fff; border-radius: 12px; padding: 14px; text-align: center; }
+    .kpi b { display: block; font-size: 30px; color: #00cba9; }
+    .kpi span { color: #b0b0b0; font-size: 13px; }
+    .kpi.alerta b { color: #ff6b6b; }
+    .kpi a { color: inherit; text-decoration: none; display: block; }
+    .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+    .panel { background: #fff; border-radius: 12px; padding: 14px; box-shadow: 0 4px 12px rgba(0,0,0,.1); }
+    .panel h3 { margin: 0 0 10px; color: #26282f; }
+    .barra { margin: 7px 0; font-size: 14px; }
+    .barra .fila { display: flex; justify-content: space-between; }
+    .barra .fondo { background: #e6e6e6; border-radius: 6px; height: 9px; overflow: hidden; }
+    .barra .fondo i { display: block; height: 100%; background: #1aa23f; }
+    .lista-alertas { list-style: none; padding: 0; margin: 0; }
+    .lista-alertas li { display: flex; justify-content: space-between; gap: 8px; padding: 7px 0; border-bottom: 1px solid #eee; font-size: 14px; }
+    .lista-alertas a { color: #0a7d68; text-decoration: none; font-weight: bold; }
+    .tag { font-size: 12px; padding: 2px 8px; border-radius: 10px; color: #fff; white-space: nowrap; }
+    .tag.venc { background: #dc3545; } .tag.sem { background: #e8853a; } .tag.mes { background: #6c757d; }
+    .vacio { color: #777; font-size: 14px; }
+</style>
+
+<h1 style="margin-top:10px;">🐂 Panel de control</h1>
+
+<p>
+    <a href="/ganado/registrar"><button>+ Registrar animal</button></a>
+    <a href="/ganado/lista"><button style="background-color:#007bff;">Ver ganado</button></a>
+    <a href="/ganado/etiquetas"><button style="background-color:#6c757d;">Etiquetas QR</button></a>
+</p>
+
+<div class="kpis">
+    <div class="kpi"><b>{{ activos }}</b><span>Animales activos</span></div>
+    <div class="kpi"><b>{{ total_fincas }}</b><span>Fincas</span></div>
+    <div class="kpi {% if alertas.vencidas %}alerta{% endif %}"><a href="/alertas"><b>{{ alertas.vencidas|length }}</b><span>Vencidas</span></a></div>
+    <div class="kpi"><a href="/alertas"><b>{{ alertas.semana|length }}</b><span>Próximos 7 días</span></a></div>
+    <div class="kpi"><b>{{ sin_historial }}</b><span>Activos sin historial</span></div>
+    <div class="kpi"><b>{{ vendidos }} / {{ muertos }}</b><span>Vendidos / Muertos</span></div>
+</div>
+
+<div class="grid2">
+    <div class="panel">
+        <h3>🔔 Atención pendiente</h3>
+        {% set urgentes = alertas.vencidas + alertas.semana %}
+        {% if urgentes %}
+            <ul class="lista-alertas">
+            {% for e in urgentes[:8] %}
+                <li>
+                    <span><a href="/ganado/detalle/{{ e.ganado.id }}">{{ e.ganado.identificacion }}</a> · {{ e.tipo }}{% if e.descripcion %}: {{ e.descripcion }}{% endif %}</span>
+                    <span>{{ e.proxima_fecha }} <span class="tag {{ 'venc' if e.proxima_fecha.isoformat() < hoy else 'sem' }}">{{ 'Vencida' if e.proxima_fecha.isoformat() < hoy else 'Esta semana' }}</span></span>
+                </li>
+            {% endfor %}
+            </ul>
+            <p><a href="/alertas">Ver todas las alertas →</a></p>
+        {% else %}
+            <p class="vacio">Nada vencido ni para esta semana. Para recibir alertas, registra eventos con "Próxima fecha" (p. ej. refuerzo de una vacuna).</p>
+        {% endif %}
+    </div>
+
+    <div class="panel">
+        <h3>🕒 Últimos eventos registrados</h3>
+        {% if ultimos %}
+            <ul class="lista-alertas">
+            {% for e in ultimos %}
+                <li>
+                    <span><a href="/ganado/detalle/{{ e.ganado.id }}">{{ e.ganado.identificacion }}</a> · {{ e.tipo }}{% if e.tipo == 'Peso' and e.valor %} {{ '%g'|format(e.valor) }} kg{% elif e.descripcion %}: {{ e.descripcion }}{% endif %}</span>
+                    <span>{{ e.fecha }}</span>
+                </li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p class="vacio">Aún no hay eventos. Abre la ficha de un animal para registrar el primero.</p>
+        {% endif %}
+    </div>
+
+    <div class="panel">
+        <h3>🌾 Animales activos por finca</h3>
+        {% set maxf = (por_finca|map(attribute=1)|max) if por_finca else 1 %}
+        {% for nombre, n in por_finca %}
+            <div class="barra"><div class="fila"><span>{{ nombre }}</span><b>{{ n }}</b></div>
+                <div class="fondo"><i style="width: {{ (n / (maxf or 1) * 100)|round|int }}%"></i></div></div>
+        {% else %}
+            <p class="vacio">Aún no hay fincas registradas.</p>
+        {% endfor %}
+    </div>
+
+    <div class="panel">
+        <h3>🐄 Por tipo y sexo (activos)</h3>
+        {% set maxt = (por_tipo|map(attribute=1)|max) if por_tipo else 1 %}
+        {% for nombre, n in por_tipo %}
+            <div class="barra"><div class="fila"><span>{{ nombre }}</span><b>{{ n }}</b></div>
+                <div class="fondo"><i style="width: {{ (n / (maxt or 1) * 100)|round|int }}%"></i></div></div>
+        {% else %}
+            <p class="vacio">Sin animales activos.</p>
+        {% endfor %}
+        {% if por_sexo %}
+            <p style="margin-top:10px;">{% for s, n in por_sexo %}<b>{{ n }}</b> {{ s|lower }}{{ 's' if n != 1 else '' }}{% if not loop.last %} · {% endif %}{% endfor %}</p>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}

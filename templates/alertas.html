@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .grupo { background: #fff; border-radius: 12px; padding: 14px; margin: 12px 0; box-shadow: 0 4px 12px rgba(0,0,0,.1); }
+    .grupo h3 { margin: 0 0 8px; }
+    .grupo.venc h3 { color: #dc3545; } .grupo.sem h3 { color: #e8853a; } .grupo.mes h3 { color: #495057; }
+    .fila-alerta { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #eee; }
+    .fila-alerta a { color: #0a7d68; font-weight: bold; text-decoration: none; }
+    .vacio { color: #777; }
+</style>
+
+<h1 style="margin-top:10px;">🔔 Alertas pendientes</h1>
+<p>Solo de animales activos. Al registrar el mismo evento (misma vacuna o tratamiento) la alerta se cierra sola; también puedes marcarla como hecha.</p>
+<p><a href="/"><button style="background-color:#6c757d;">← Volver al panel</button></a></p>
+
+{% macro grupo(titulo, clase, items) %}
+<div class="grupo {{ clase }}">
+    <h3>{{ titulo }} ({{ items|length }})</h3>
+    {% for e in items %}
+        <div class="fila-alerta">
+            <span><a href="/ganado/detalle/{{ e.ganado.id }}">{{ e.ganado.identificacion }}</a>{% if e.ganado.nombre %} ({{ e.ganado.nombre }}){% endif %} · {{ e.tipo }}{% if e.descripcion %}: {{ e.descripcion }}{% endif %}</span>
+            <span>📅 {{ e.proxima_fecha }}
+                <button class="btn-hecho" data-id="{{ e.id }}" style="margin-left:8px;">Marcar hecho</button></span>
+        </div>
+    {% else %}
+        <p class="vacio">Nada en esta categoría.</p>
+    {% endfor %}
+</div>
+{% endmacro %}
+
+{{ grupo("⚠ Vencidas", "venc", alertas.vencidas) }}
+{{ grupo("Próximos 7 días", "sem", alertas.semana) }}
+{{ grupo("Próximos 30 días", "mes", alertas.mes) }}
+{% if alertas.despues %}{{ grupo("Más adelante", "mes", alertas.despues) }}{% endif %}
+
+<script>
+    document.querySelectorAll(".btn-hecho").forEach(btn => {
+        btn.addEventListener("click", async () => {
+            const r = await fetch(`/ganado/eventos/${btn.dataset.id}/atendido`, { method: "POST" });
+            if (r.ok) location.reload();
+        });
+    });
+</script>
+{% endblock %}

@@ -71,7 +71,7 @@ def crear_tipo_animal(tipo: schemas.TipoAnimalCreate, db: Session = Depends(get_
         
         # Verificamos si el error es por duplicidad (el constraint UNIQUE)
         # Esto funciona bien con SQLite y otros DBs
-        if 'UNIQUE constraint failed' in str(e):
+        if 'unique' in str(e).lower() or 'duplicate' in str(e).lower():
             raise HTTPException(
                 status_code=400,
                 detail=f"El Tipo de Animal con el nombre '{tipo.nombre}' ya existe."

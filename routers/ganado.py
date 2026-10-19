@@ -7,7 +7,7 @@ import qrcode
 from fastapi import APIRouter, Request, Depends, HTTPException, UploadFile, File, Form
 from fastapi.responses import Response
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -94,8 +94,10 @@ async def registrar_ganado_view(request: Request, db: Session = Depends(get_db))
 
 # Lista de ganado con búsqueda por identificación/nombre y filtro por finca
 @router.get("/lista")
-async def listar_ganado_view(request: Request, q: str = "", finca_id: str = "", db: Session = Depends(get_db)):
+async def listar_ganado_view(request: Request, q: str = "", finca_id: str = "", estado: str = "Activo", db: Session = Depends(get_db)):
     consulta = db.query(models.Ganado)
+    if estado in schemas.ESTADOS:          # "Todos" no filtra
+        consulta = consulta.filter(models.Ganado.estado == estado)
     q = q.strip()
     if q:
         patron = f"%{q}%"
@@ -110,14 +112,15 @@ async def listar_ganado_view(request: Request, q: str = "", finca_id: str = "", 
     fincas = db.query(models.Finca).order_by(models.Finca.nombre).all()
     return templates.TemplateResponse(
         "ganado/lista_ganado.html",
-        {"request": request, "ganados": ganados, "fincas": fincas, "q": q, "finca_sel": finca_sel}
+        {"request": request, "ganados": ganados, "fincas": fincas, "q": q, "finca_sel": finca_sel,
+         "estado_sel": estado, "estados": schemas.ESTADOS}
     )
 
 
 # Hoja de etiquetas QR imprimible
 @router.get("/etiquetas")
 async def etiquetas_view(request: Request, finca_id: str = "", db: Session = Depends(get_db)):
-    consulta = db.query(models.Ganado)
+    consulta = db.query(models.Ganado).filter(models.Ganado.estado == "Activo")
     finca_sel = _a_int(finca_id)
     if finca_sel:
         consulta = consulta.filter(models.Ganado.finca_id == finca_sel)
@@ -175,6 +178,8 @@ async def detalle_ganado_view(ganado_id: int, request: Request, db: Session = De
             "hoy": date.today().isoformat(),
             "ultimo_peso": ultimo_peso,
             "ultima_vacuna": ultima_vacuna,
+            "estados": schemas.ESTADOS,
+            "pendientes": sorted([e for e in ganado.eventos if e.proxima_fecha and not e.atendido], key=lambda e: e.proxima_fecha),
             "ficha_url": url_ficha(request, ganado.id),
         }
     )
@@ -311,12 +316,32 @@ def crear_evento(ganado_id: int, datos: schemas.EventoCreate, db: Session = Depe
     if datos.tipo in ("Vacuna", "Tratamiento") and not descripcion:
         raise HTTPException(status_code=400, detail=f"Indica el nombre de la {datos.tipo.lower()}.")
 
+    if datos.proxima_fecha and datos.proxima_fecha < datos.fecha:
+        raise HTTPException(status_code=400, detail="La próxima fecha no puede ser anterior a la fecha del evento.")
+
+    # Si ya existía una alerta pendiente del mismo tipo y detalle (p. ej. el refuerzo de la misma
+    # vacuna), registrar este evento la da por atendida.
+    mismo_detalle = (
+        func.lower(models.EventoGanado.descripcion) == descripcion.lower()
+        if descripcion else models.EventoGanado.descripcion.is_(None)
+    )
+    previas = db.query(models.EventoGanado).filter(
+        models.EventoGanado.ganado_id == ganado_id,
+        models.EventoGanado.tipo == datos.tipo,
+        models.EventoGanado.proxima_fecha.isnot(None),
+        models.EventoGanado.atendido.is_(False),
+        mismo_detalle,
+    ).all()
+    for previa in previas:
+        previa.atendido = True
+
     evento = models.EventoGanado(
         ganado_id=ganado_id,
         tipo=datos.tipo,
         fecha=datos.fecha,
         valor=datos.valor,
         descripcion=descripcion,
+        proxima_fecha=datos.proxima_fecha,
     )
     db.add(evento)
     db.commit()
@@ -332,3 +357,33 @@ def eliminar_evento(evento_id: int, db: Session = Depends(get_db)):
     db.delete(evento)
     db.commit()
     return {"mensaje": "Evento eliminado correctamente"}
+
+
+@router.post("/eventos/{evento_id}/atendido")
+def marcar_atendido(evento_id: int, db: Session = Depends(get_db)):
+    """Marca como hecha una alerta pendiente (sin crear un evento nuevo)."""
+    evento = db.query(models.EventoGanado).filter(models.EventoGanado.id == evento_id).first()
+    if not evento:
+        raise HTTPException(status_code=404, detail="Evento no encontrado")
+    evento.atendido = True
+    db.commit()
+    return {"mensaje": "Alerta marcada como atendida"}
+
+
+# ============================================================
+#              ESTADO DEL ANIMAL (ACTIVO / VENDIDO / MUERTO)
+# ============================================================
+@router.put("/{ganado_id}/estado", response_model=schemas.Ganado)
+def cambiar_estado(ganado_id: int, datos: schemas.EstadoUpdate, db: Session = Depends(get_db)):
+    """Cambia el estado conservando todo el historial (en vez de eliminar el animal)."""
+    animal = db.query(models.Ganado).filter(models.Ganado.id == ganado_id).first()
+    if not animal:
+        raise HTTPException(status_code=404, detail="Ganado no encontrado")
+    if datos.fecha and datos.fecha > date.today():
+        raise HTTPException(status_code=400, detail="La fecha del cambio de estado no puede ser futura.")
+
+    animal.estado = datos.estado
+    animal.fecha_estado = None if datos.estado == "Activo" else (datos.fecha or date.today())
+    db.commit()
+    db.refresh(animal)
+    return animal

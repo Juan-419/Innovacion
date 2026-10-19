@@ -25,6 +25,14 @@
     .ev-tabla td, .ev-tabla th { border-color: #383c45; padding: 10px; }
     .tabla-scroll { overflow-x: auto; }
     .detalle-acciones { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+    .estado-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; margin-bottom: 12px; }
+    .estado-row select, .estado-row input { padding: 8px; font-size: 15px; border-radius: 6px; border: 1px solid #555; background: #1f2128; color: #fff; }
+    .badge { padding: 4px 12px; border-radius: 14px; font-weight: bold; color: #fff; }
+    .est-activo { background: #1aa23f; } .est-vendido { background: #e8853a; } .est-muerto { background: #6c757d; }
+    .aviso { background: #3a2f1f; border: 1px solid #e8853a; border-radius: 10px; padding: 10px 14px; margin: 12px 0; color: #fff; }
+    .aviso.venc { background: #3d2226; border-color: #dc3545; }
+    .aviso ul { margin: 6px 0 0; padding-left: 18px; }
+    .t-venc { color: #ff6b6b; font-weight: bold; } .t-ok { color: #00cba9; }
     .detalle-foto { text-align: center; margin-top: 18px; }
     .detalle-foto img { max-width: 100%; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,.3); }
 </style>
@@ -33,6 +41,29 @@
     <div class="card detalle-card">
 
         <h1 class="card-title">🐂 Animal: <span id="identificacion">{{ ganado.identificacion }}</span></h1>
+
+        <div class="estado-row">
+            <span class="badge est-{{ ganado.estado|lower }}">{{ ganado.estado }}{% if ganado.fecha_estado %} · {{ ganado.fecha_estado }}{% endif %}</span>
+            <select id="estado-sel" aria-label="Nuevo estado">
+                {% for e in estados %}<option value="{{ e }}" {% if e == ganado.estado %}selected{% endif %}>{{ e }}</option>{% endfor %}
+            </select>
+            <input type="date" id="estado-fecha" value="{{ hoy }}" max="{{ hoy }}" aria-label="Fecha del cambio">
+            <button id="btn-estado" style="background-color:#007bff;">Cambiar estado</button>
+        </div>
+        <p id="estado-msg" style="text-align:center; margin:0 0 8px;"></p>
+
+        {% if pendientes %}
+        <div class="aviso {% if pendientes[0].proxima_fecha.isoformat() < hoy %}venc{% endif %}">
+            <strong>🔔 Pendiente para este animal</strong>
+            <ul>
+            {% for p in pendientes %}
+                <li>{{ p.tipo }}{% if p.descripcion %}: {{ p.descripcion }}{% endif %} — {{ p.proxima_fecha }}
+                    {% if p.proxima_fecha.isoformat() < hoy %}<span class="t-venc">(vencida)</span>{% endif %}
+                    <button class="btn-hecho" data-id="{{ p.id }}" style="padding:2px 8px; margin-left:6px;">Hecho</button></li>
+            {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
 
         <div class="top-row">
             <div class="datos">
@@ -78,6 +109,10 @@
                 <label for="ev-desc" id="ev-desc-label">Detalle</label>
                 <input type="text" id="ev-desc" maxlength="300" placeholder="Nota (opcional)">
             </div>
+            <div>
+                <label for="ev-proxima">Próxima fecha (opcional)</label>
+                <input type="date" id="ev-proxima" min="{{ hoy }}">
+            </div>
             <div><button type="submit" style="width:100%;">Guardar evento</button></div>
         </form>
         <p id="ev-mensaje" style="text-align:center; margin-top:10px;"></p>
@@ -86,7 +121,7 @@
         {% if ganado.eventos %}
         <div class="tabla-scroll">
             <table class="ev-tabla">
-                <thead><tr><th>Fecha</th><th>Tipo</th><th>Valor</th><th>Detalle</th><th></th></tr></thead>
+                <thead><tr><th>Fecha</th><th>Tipo</th><th>Valor</th><th>Detalle</th><th>Próxima</th><th></th></tr></thead>
                 <tbody>
                 {% for e in ganado.eventos %}
                     <tr>
@@ -94,6 +129,12 @@
                         <td>{{ e.tipo }}</td>
                         <td>{% if e.valor is not none %}{{ '%g'|format(e.valor) }}{% if e.tipo == 'Peso' %} kg{% endif %}{% else %}—{% endif %}</td>
                         <td>{{ e.descripcion or '—' }}</td>
+                        <td>
+                            {% if not e.proxima_fecha %}—
+                            {% elif e.atendido %}<span class="t-ok">✔ {{ e.proxima_fecha }}</span>
+                            {% elif e.proxima_fecha.isoformat() < hoy %}<span class="t-venc">⚠ {{ e.proxima_fecha }}</span>
+                            {% else %}{{ e.proxima_fecha }}{% endif %}
+                        </td>
                         <td><button class="btn-borrar-ev" data-id="{{ e.id }}" style="background-color:#dc3545;" title="Eliminar evento">✕</button></td>
                     </tr>
                 {% endfor %}
@@ -145,7 +186,8 @@
             tipo: tipoSel.value,
             fecha: document.getElementById("ev-fecha").value,
             valor: valorInput.value === "" ? null : parseFloat(valorInput.value),
-            descripcion: descInput.value.trim() || null
+            descripcion: descInput.value.trim() || null,
+            proxima_fecha: document.getElementById("ev-proxima").value || null
         };
         const r = await fetch(`/ganado/${GANADO_ID}/eventos`, {
             method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(cuerpo)
@@ -154,6 +196,27 @@
         const err = await r.json().catch(() => ({}));
         evMsg.style.color = "#ff6b6b";
         evMsg.textContent = "❌ " + (typeof err.detail === "string" ? err.detail : "Revisa los datos del evento.");
+    });
+
+    document.getElementById("btn-estado").addEventListener("click", async () => {
+        const msg = document.getElementById("estado-msg");
+        const nuevo = document.getElementById("estado-sel").value;
+        if (nuevo !== "Activo" && !confirm(`¿Marcar este animal como ${nuevo}? Su historial se conserva y ya no aparecerá en la lista de activos ni en las alertas.`)) return;
+        const r = await fetch(`/ganado/${GANADO_ID}/estado`, {
+            method: "PUT", headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ estado: nuevo, fecha: document.getElementById("estado-fecha").value || null })
+        });
+        if (r.ok) { location.reload(); return; }
+        const err = await r.json().catch(() => ({}));
+        msg.style.color = "#ff6b6b";
+        msg.textContent = "❌ " + (typeof err.detail === "string" ? err.detail : "No se pudo cambiar el estado.");
+    });
+
+    document.querySelectorAll(".btn-hecho").forEach(btn => {
+        btn.addEventListener("click", async () => {
+            const r = await fetch(`/ganado/eventos/${btn.dataset.id}/atendido`, { method: "POST" });
+            if (r.ok) location.reload();
+        });
     });
 
     document.querySelectorAll(".btn-borrar-ev").forEach(btn => {

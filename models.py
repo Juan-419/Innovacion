@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Date, Float
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Date, Float, Boolean, false
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from database import Base
@@ -39,6 +39,8 @@ class Ganado(Base):
     tipo_animal_id = Column(Integer, ForeignKey("tipos_animales.id"), nullable=False)
     fecha_registro = Column(DateTime, default=datetime.utcnow)
     foto = Column(String, nullable=True)  
+    estado = Column(String(20), nullable=False, default="Activo", server_default="Activo")  # Activo / Vendido / Muerto
+    fecha_estado = Column(Date, nullable=True)
 
 
     finca = relationship("Finca", back_populates="ganados")
@@ -61,6 +63,8 @@ class EventoGanado(Base):
     fecha = Column(Date, nullable=False)
     valor = Column(Float, nullable=True)            # p. ej. peso en kg
     descripcion = Column(String(300), nullable=True)
+    proxima_fecha = Column(Date, nullable=True)      # próxima aplicación / refuerzo / control
+    atendido = Column(Boolean, nullable=False, default=False, server_default=false())
     fecha_registro = Column(DateTime, default=datetime.utcnow)
 
     ganado = relationship("Ganado", back_populates="eventos")

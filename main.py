@@ -5,18 +5,19 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi import Request
 
-from database import Base, engine
+from database import init_db
 import models
 
 # Routers
 from routers import finca
 from routers import ganado
 from routers import tipo_animal
+from routers import panel
 from fastapi.staticfiles import StaticFiles
 
 
 # Crear tablas en la base de datos
-Base.metadata.create_all(bind=engine)
+init_db()
 
 app = FastAPI(
     title="Sistema de Gestión de Ganado",
@@ -52,16 +53,4 @@ app.add_middleware(
 app.include_router(finca.router)
 app.include_router(ganado.router)
 app.include_router(tipo_animal.router)
-
-
-
-# ============================================================
-#                        RUTA RAÍZ
-# ============================================================
-
-@app.get("/")
-def home(request: Request):
-    return templates.TemplateResponse(
-        "index.html",
-        {"request": request, "mensaje": "Sistema funcionando"}
-    )
+app.include_router(panel.router)  # inicio (panel) y alertas

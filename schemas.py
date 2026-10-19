@@ -37,6 +37,8 @@ class GanadoCreate(GanadoBase):
 class Ganado(GanadoBase):
     id: int
     foto: Optional[str] = None
+    estado: str = "Activo"
+    fecha_estado: Optional[date] = None
     class Config:
         orm_mode = True
 
@@ -74,6 +76,12 @@ class TipoAnimal(TipoAnimalBase):
 
 
 #-------Eventos del animal (historial)------
+ESTADOS = ("Activo", "Vendido", "Muerto")
+
+class EstadoUpdate(BaseModel):
+    estado: Literal[ESTADOS]
+    fecha: Optional[date] = None
+
 TIPOS_EVENTO = ("Vacuna", "Peso", "Tratamiento", "Reproducción", "Alimentación", "Otro")
 
 class EventoCreate(BaseModel):
@@ -81,8 +89,10 @@ class EventoCreate(BaseModel):
     fecha: date
     valor: Optional[float] = Field(None, ge=0)          # peso en kg, dosis, etc.
     descripcion: Optional[str] = Field(None, max_length=300)
+    proxima_fecha: Optional[date] = None               # cuándo toca repetirlo
 
 class Evento(EventoCreate):
     id: int
     ganado_id: int
+    atendido: bool = False
     model_config = ConfigDict(from_attributes=True)
