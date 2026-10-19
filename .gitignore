@@ -2,3 +2,6 @@
 __pycache__/
 *.py[cod]
 .venv/
+*.db
+static/uploads/*
+!static/uploads/.gitkeep

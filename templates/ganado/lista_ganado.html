@@ -12,8 +12,23 @@
     <p>
         <a href="/ganado/registrar"><button>+ Registrar Nuevo Animal</button></a>
         <a href="/fincas/lista"><button style="background-color: #6c757d;">Ver Fincas</button></a>
+        <a href="/ganado/etiquetas"><button style="background-color: #007bff;">Etiquetas QR</button></a>
     </p>
 
+    <form method="get" action="/ganado/lista" class="buscador">
+        <input type="search" name="q" value="{{ q }}" placeholder="Buscar por identificación o nombre" aria-label="Buscar">
+        <select name="finca_id" aria-label="Filtrar por finca">
+            <option value="">Todas las fincas</option>
+            {% for f in fincas %}
+                <option value="{{ f.id }}" {% if finca_sel == f.id %}selected{% endif %}>{{ f.nombre }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Buscar</button>
+        {% if q or finca_sel %}<a href="/ganado/lista"><button type="button" style="background-color:#6c757d;">Limpiar</button></a>{% endif %}
+    </form>
+    <p style="margin: 8px 0;"><strong>{{ ganados|length }}</strong> animal(es){% if q or finca_sel %} encontrados{% endif %}.</p>
+
+    <div style="overflow-x:auto;">
     <table>
         <thead>
             <tr>
@@ -52,11 +67,12 @@
                 {% endfor %}
             {% else %}
                 <tr>
-                    <td colspan="8" style="text-align: center;">Aún no hay ganado registrado.</td>
+                    <td colspan="8" style="text-align: center;">{% if q or finca_sel %}No se encontraron animales con ese criterio.{% else %}Aún no hay ganado registrado.{% endif %}</td>
                 </tr>
             {% endif %}
         </tbody>
     </table>
+    </div>
     
     <p id="mensaje-feedback" style="text-align: center; margin-top: 15px;"></p>
 

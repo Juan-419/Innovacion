@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .etiquetas { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; margin-top: 12px; }
+    .etiqueta { background: #fff; border: 1px dashed #888; border-radius: 8px; padding: 10px; text-align: center; break-inside: avoid; }
+    .etiqueta img { width: 140px; height: 140px; }
+    .etiqueta .ident { font-weight: bold; font-size: 16px; color: #111; }
+    .etiqueta .sub { font-size: 12px; color: #555; }
+    @media print {
+        .navbar, .main-footer, .no-print { display: none !important; }
+        body { background: #fff !important; }
+        .container { background: none !important; padding: 0 !important; margin: 0 !important; }
+    }
+</style>
+
+<h1 class="no-print" style="margin-top:10px;">🏷️ Etiquetas QR</h1>
+<p class="no-print">Imprime esta hoja, recorta y pega cada etiqueta (o ponla en el arete o el corral). Al escanearla se abre la ficha del animal.</p>
+
+<form method="get" action="/ganado/etiquetas" class="buscador no-print">
+    <select name="finca_id" aria-label="Filtrar por finca">
+        <option value="">Todas las fincas</option>
+        {% for f in fincas %}
+            <option value="{{ f.id }}" {% if finca_sel == f.id %}selected{% endif %}>{{ f.nombre }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit">Filtrar</button>
+    <button type="button" onclick="window.print()" style="background-color:#007bff;">🖨️ Imprimir</button>
+</form>
+
+{% if ganados %}
+<div class="etiquetas">
+    {% for a in ganados %}
+        <div class="etiqueta">
+            <img src="/ganado/{{ a.id }}/qr.png" alt="QR {{ a.identificacion }}">
+            <div class="ident">{{ a.identificacion }}</div>
+            <div class="sub">{{ a.nombre or '' }}{% if a.nombre and a.finca %} · {% endif %}{{ a.finca.nombre if a.finca else '' }}</div>
+        </div>
+    {% endfor %}
+</div>
+{% else %}
+    <p>No hay animales para generar etiquetas.</p>
+{% endif %}
+{% endblock %}

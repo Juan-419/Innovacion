@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, ConfigDict, Field
+from typing import Optional, Literal
 from datetime import date
 from fastapi import UploadFile, File
 
@@ -36,6 +36,7 @@ class GanadoCreate(GanadoBase):
 
 class Ganado(GanadoBase):
     id: int
+    foto: Optional[str] = None
     class Config:
         orm_mode = True
 
@@ -70,3 +71,18 @@ class TipoAnimal(TipoAnimalBase):
 
     class Config:
         from_attributes = True
+
+
+#-------Eventos del animal (historial)------
+TIPOS_EVENTO = ("Vacuna", "Peso", "Tratamiento", "Reproducción", "Alimentación", "Otro")
+
+class EventoCreate(BaseModel):
+    tipo: Literal[TIPOS_EVENTO]
+    fecha: date
+    valor: Optional[float] = Field(None, ge=0)          # peso en kg, dosis, etc.
+    descripcion: Optional[str] = Field(None, max_length=300)
+
+class Evento(EventoCreate):
+    id: int
+    ganado_id: int
+    model_config = ConfigDict(from_attributes=True)

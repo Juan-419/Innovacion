@@ -32,12 +32,6 @@
                 <input type="date" id="fechaNacimiento" required> 
             </div>
 
-            <label for="edad">Edad (en meses):</label>
-            <div class="input-group">
-                <div class="icon-container"><i class="fa-solid fa-clock"></i></div>
-                <input type="number" id="edad" placeholder="Edad en meses" required min="0">
-            </div>
-
             <label for="sexo">Sexo:</label>
             <div class="input-group select-wrapper"> 
                 <select id="sexo" required>
@@ -90,7 +84,6 @@ form.addEventListener("submit", async (e) => {
     formData.append("nombre", document.getElementById("nombre").value.trim() || '');
     formData.append("fecha_nacimiento", document.getElementById("fechaNacimiento").value);
     formData.append("sexo", document.getElementById("sexo").value);
-    formData.append("edad", document.getElementById("edad").value);
     formData.append("finca_id", document.getElementById("finca").value);
     formData.append("tipo_animal_id", document.getElementById("tipoAnimal").value);
 

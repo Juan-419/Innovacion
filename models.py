@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Date
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Date, Float
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from database import Base
@@ -43,3 +43,24 @@ class Ganado(Base):
 
     finca = relationship("Finca", back_populates="ganados")
     tipo_animal = relationship("TipoAnimal", back_populates="ganados")
+    eventos = relationship(
+        "EventoGanado",
+        back_populates="ganado",
+        cascade="all, delete-orphan",
+        order_by="[EventoGanado.fecha.desc(), EventoGanado.id.desc()]",
+    )
+
+
+class EventoGanado(Base):
+    """Historial de cada animal: vacunas, pesos, tratamientos, etc."""
+    __tablename__ = "eventos_ganado"
+
+    id = Column(Integer, primary_key=True, index=True)
+    ganado_id = Column(Integer, ForeignKey("ganados.id"), nullable=False, index=True)
+    tipo = Column(String(30), nullable=False)       # Vacuna, Peso, Tratamiento...
+    fecha = Column(Date, nullable=False)
+    valor = Column(Float, nullable=True)            # p. ej. peso en kg
+    descripcion = Column(String(300), nullable=True)
+    fecha_registro = Column(DateTime, default=datetime.utcnow)
+
+    ganado = relationship("Ganado", back_populates="eventos")

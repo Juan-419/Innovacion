@@ -413,3 +413,24 @@ button:hover, input[type="submit"]:hover {
     font-weight: bold;
     font-size: 0.9em;
 }
+
+
+/* ------------------ BUSCADOR Y USO EN CELULAR ------------------ */
+.buscador {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0;
+}
+.buscador input[type="search"], .buscador select {
+    flex: 1 1 200px;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #bbb;
+    border-radius: 5px;
+}
+@media (max-width: 640px) {
+    .container { padding: 12px; }
+    button, input[type="submit"] { padding: 12px 14px; font-size: 16px; }
+    table th, table td { padding: 8px; }
+}
